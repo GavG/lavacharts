@@ -135,7 +135,7 @@ class ScriptManager
 
         $buffer = $jsFactory->getOutputBuffer();
 
-        return $this->scriptTagWrap($buffer);
+        return $buffer;
     }
 
     /**
