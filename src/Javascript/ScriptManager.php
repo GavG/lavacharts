@@ -146,6 +146,10 @@ class ScriptManager
      */
     private function scriptTagWrap(Buffer $buffer)
     {
+        if ($this->options->get('omit_script_tags')) {
+            return $buffer;
+        }
+
         return $buffer->prepend(PHP_EOL)
                       ->prepend(self::JS_OPEN)
                       ->prepend(PHP_EOL)
