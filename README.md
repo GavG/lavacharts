@@ -1,12 +1,20 @@
+<<<<<<< HEAD
 # Lavacharts 3.1.12
 
+=======
+# Lavacharts 3.2.0
+>>>>>>> a4edf0a4d82aba848efa07ff10b537d640d4f91b
 [![Total Downloads](https://img.shields.io/packagist/dt/khill/lavacharts.svg?style=plastic)](https://packagist.org/packages/khill/lavacharts)
 [![License](https://img.shields.io/packagist/l/khill/lavacharts.svg?style=plastic)](http://opensource.org/licenses/MIT)
-[![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%205.4-8892BF.svg?style=plastic)](https://php.net/)
+[![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%205.5-8892BF.svg?style=plastic)](https://php.net/)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/kevinkhill/lavacharts?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+<<<<<<< HEAD
 [![PayPal](https://img.shields.io/badge/paypal-donate-yellow.svg?style=plastic)](https://www.paypal.me/kevinkhill/)
+=======
+[![PayPal](https://img.shields.io/badge/paypal-donate-yellow.svg?style=plastic)](https://paypal.me/kevinkhill)
+>>>>>>> a4edf0a4d82aba848efa07ff10b537d640d4f91b
 
-Lavacharts is a graphing / chart library for PHP5.4+ that wraps the Google Chart API.
+Lavacharts is a graphing / chart library for PHP5.6+ that wraps the Google Chart API.
 
 Stable:
 [![Current Release](https://img.shields.io/github/release/kevinkhill/lavacharts.svg?style=plastic)](https://github.com/kevinkhill/lavacharts/releases)
@@ -22,17 +30,34 @@ Dev:
 Please don't be discouraged if you see that it has been "years" since an update, but rather think that Lavacharts has settled into a "stable" state and requires less tinkering from me. I would love to add new features, but my responsibilities leave little room for my projects. I am happy to field issues, answer questions, debug and help if needed. Lavacharts is not vaporware! :smile:
 
 ## Package Features
+<<<<<<< HEAD
 - **Updated!** Laravel 5.5+ auto-discovery
 - Any option for customizing charts that Google supports, Lavacharts should as well. Just use the chart constructor to assign any customization options you wish!
  - Visit [Google's Chart Gallery](https://developers.google.com/chart/interactive/docs/gallery) for details on available options
+=======
+- **Updated!** Global package configuration
+  - Options include: `auto_run`, `locale`, `datetime_format`, `timezone`, `maps_api_key`
+
+- **Updated!** New DataInterface for creating custom DataProviders.
+  - [JoinedDataTable] (https://github.com/kevinkhill/lavacharts/blob/3.2/src/DataTables/JoinedDataTable.php) Is an example of one of the usages for DataInterface. 
+  
+- **Updated!** 
+
+- Any option for customizing charts that Google supports, Lavacharts should as well.
+ - Visit [Google's Chart Gallery](https://developers.google.com/chart/interactive/docs/gallery) for details on available option
+ 
+>>>>>>> a4edf0a4d82aba848efa07ff10b537d640d4f91b
 - Custom JavaScript module for interacting with charts client-side
-  - AJAX data reloading
+  - AJAX data + option reloading
   - Fetching charts
   - Events integration
-- Column Formatters & Roles
-- Blade template extensions for Laravel
-- Twig template extensions for Symfony
+- Column Formatters and Roles
+
+- Framework Integrations for [Laravel](https://github.com/kevinkhill/lavacharts/blob/3.2/src/Laravel/LavachartsServiceProvider.php), [Symfony](https://github.com/kevinkhill/lavacharts/tree/3.2/src/Symfony/Bundle/Resources), [Angular](https://github.com/kevinkhill/lavacharts/blob/3.2/javascript/src/angular/LavaJsService.ts)
+- Template Extensions for [Blade](https://github.com/kevinkhill/lavacharts/blob/3.2/src/Laravel/BladeTemplateExtensions.php), [Twig](https://github.com/kevinkhill/lavacharts/blob/3.2/src/Symfony/Bundle/Twig/LavachartsExtension.php)
+  
 - [Carbon](https://github.com/briannesbitt/Carbon) support for date/datetime/timeofday columns
+
 - Now supporting **22** Charts!
   - Annotation, Area, Bar, Bubble, Calendar, Candlestick, Column, Combo, Gantt, Gauge, Geo, Histogram, Line, Org, Pie, Sankey, Scatter, SteppedArea, Table, Timeline, TreeMap, and WordTree!
 
@@ -47,7 +72,11 @@ Please don't be discouraged if you see that it has been "years" since an update,
 ## Installing
 In your project's main `composer.json` file, add this line to the requirements:
 ```json
+<<<<<<< HEAD
 "khill/lavacharts": "^3.1"
+=======
+"khill/lavacharts": "~3.2"
+>>>>>>> a4edf0a4d82aba848efa07ff10b537d640d4f91b
 ```
 
 Run Composer to install Lavacharts:

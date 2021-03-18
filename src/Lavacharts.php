@@ -4,26 +4,30 @@ namespace Khill\Lavacharts;
 
 use Khill\Lavacharts\Charts\Chart;
 use Khill\Lavacharts\Charts\ChartFactory;
-use Khill\Lavacharts\Dashboards\Dashboard;
 use Khill\Lavacharts\Dashboards\DashboardFactory;
 use Khill\Lavacharts\Dashboards\Filters\Filter;
 use Khill\Lavacharts\Dashboards\Filters\FilterFactory;
 use Khill\Lavacharts\Dashboards\Wrappers\ChartWrapper;
 use Khill\Lavacharts\Dashboards\Wrappers\ControlWrapper;
+use Khill\Lavacharts\DataTables\DataFactory;
 use Khill\Lavacharts\DataTables\DataTable;
 use Khill\Lavacharts\DataTables\Formats\Format;
 use Khill\Lavacharts\Exceptions\InvalidElementId;
 use Khill\Lavacharts\Exceptions\InvalidLabel;
-use Khill\Lavacharts\Exceptions\InvalidLavaObject;
+use Khill\Lavacharts\Exceptions\InvalidRenderable;
 use Khill\Lavacharts\Javascript\ScriptManager;
-use Khill\Lavacharts\Support\Config;
+use Khill\Lavacharts\Support\Buffer;
+use Khill\Lavacharts\Support\Contracts\Arrayable;
+use Khill\Lavacharts\Support\Contracts\Jsonable;
+use Khill\Lavacharts\Support\Options;
+use Khill\Lavacharts\Support\Renderable;
+use Khill\Lavacharts\Support\Contracts\Customizable;
 use Khill\Lavacharts\Support\Html\HtmlFactory;
 use Khill\Lavacharts\Support\Psr4Autoloader;
+use Khill\Lavacharts\Support\Traits\HasOptionsTrait as HasOptions;
 use Khill\Lavacharts\Values\ElementId;
 use Khill\Lavacharts\Values\Label;
 use Khill\Lavacharts\Values\StringValue;
-use Khill\Lavacharts\Support\Traits\HasOptionsTrait as HasOptions;
-use Khill\Lavacharts\Support\Contracts\RenderableInterface as Renderable;
 
 require(__DIR__.'/Support/Traits/HasOptionsTrait.php');
 
@@ -31,49 +35,67 @@ require(__DIR__.'/Support/Traits/HasOptionsTrait.php');
  * Lavacharts - A PHP wrapper library for the Google Chart API
  *
  *
- * @category  Class
  * @package   Khill\Lavacharts
+ * @since     1.0.0
  * @author    Kevin Hill <kevinkhill@gmail.com>
  * @copyright (c) 2017, KHill Designs
  * @link      http://github.com/kevinkhill/lavacharts GitHub Repository Page
  * @link      http://lavacharts.com                   Official Docs Site
  * @license   http://opensource.org/licenses/MIT      MIT
  */
-class Lavacharts
+class Lavacharts implements Customizable, Jsonable, Arrayable
 {
     use HasOptions;
 
     /**
      * Lavacharts version
      */
+<<<<<<< HEAD
     const VERSION = '3.1.11';
+=======
+    const VERSION = '3.2.0';
+>>>>>>> a4edf0a4d82aba848efa07ff10b537d640d4f91b
 
     /**
-     * Locale for the Charts and Dashboards.
-     *
-     * @var string
-     */
-    private $locale = 'en';
-
-    /**
-     * Holds all of the defined Charts and DataTables.
+     * Storage for all of the defined Renderables.
      *
      * @var \Khill\Lavacharts\Volcano
      */
     private $volcano;
 
     /**
-     * ScriptManager for outputting lava.js and chart/dashboard javascript
+     * Chart factory for creating new charts.
      *
-     * @var \Khill\Lavacharts\Javascript\ScriptManager
+     * @var \Khill\Lavacharts\Charts\ChartFactory
+     */
+    private $chartFactory;
+
+    /**
+     * Dashboard factory for creating dashboards.
+     *
+     * @var \Khill\Lavacharts\Dashboards\DashboardFactory
+     */
+    private $dashFactory;
+
+    /**
+     * Instance of the ScriptManager.
+     *
+     * @var ScriptManager
      */
     private $scriptManager;
 
     /**
      * Lavacharts constructor.
+     *
+     * @param array $options
      */
     public function __construct(array $options = [])
     {
+<<<<<<< HEAD
+=======
+        $this->initOptions($options);
+
+>>>>>>> a4edf0a4d82aba848efa07ff10b537d640d4f91b
         if ( ! $this->usingComposer()) {
             require_once(__DIR__.'/Support/Psr4Autoloader.php');
 
@@ -88,6 +110,7 @@ class Lavacharts
         $this->chartFactory  = new ChartFactory;
         $this->dashFactory   = new DashboardFactory;
         $this->scriptManager = new ScriptManager($this->options);
+
     }
 
     /**
@@ -97,7 +120,7 @@ class Lavacharts
      * @param  string $method Name of method
      * @param  array  $args   Passed arguments
      * @throws \Khill\Lavacharts\Exceptions\InvalidLabel
-     * @throws \Khill\Lavacharts\Exceptions\InvalidLavaObject
+     * @throws \Khill\Lavacharts\Exceptions\InvalidRenderable
      * @throws \Khill\Lavacharts\Exceptions\InvalidFunctionParam
      * @return mixed Returns Charts, Formats and Filters
      */
@@ -112,11 +135,11 @@ class Lavacharts
             if ($this->exists($method, $args[0])) {
                 $label = new Label($args[0]);
 
-                $lavaClass = $this->volcano->get($method, $label);
+                return $this->volcano->get($method, $label);
             } else {
                 $chart = $this->chartFactory->create($method, $args);
 
-                $lavaClass = $this->volcano->store($chart);
+                return $this->volcano->store($chart);
             }
         }
 
@@ -124,21 +147,74 @@ class Lavacharts
         if ((bool) preg_match('/Filter$/', $method)) {
             $options = isset($args[1]) ? $args[1] : [];
 
-            $lavaClass = FilterFactory::create($method, $args[0], $options);
+            return FilterFactory::create($method, $args[0], $options);
         }
 
         //Formats
         if ((bool) preg_match('/Format$/', $method)) {
             $options = isset($args[0]) ? $args[0] : [];
 
-            $lavaClass = Format::create($method, $options);
+            return Format::create($method, $options);
         }
 
-        if (isset($lavaClass) == false) {
-            throw new InvalidLavaObject($method);
-        }
+        throw new \BadMethodCallException(
+            sprintf('Unknown method "%s" in "%s".', $method, get_class())
+        );
+    }
 
-        return $lavaClass;
+    /**
+     * Run the library and get the resulting scripts.
+     *
+     *
+     * This method will create a <script> for the lava.js module along with
+     * one additional <script> per chart & dashboard being rendered.
+     *
+     * @since 3.2.0
+     * @return string HTML script elements
+     */
+    public function flow()
+    {
+        return $this->renderAll();
+
+        //@TODO This is the goal :)
+//        return new ScriptManager($this->options, json_encode($this));
+    }
+
+    /**
+     * Convert the Lavacharts object to an array
+     *
+     * @since 3.2.0
+     * @return array
+     */
+    public function toArray()
+    {
+        return [
+            'version' => self::VERSION,
+            'charts' => $this->volcano->getCharts(),
+            'dashboards' => $this->volcano->getDashboards(),
+        ];
+    }
+
+    /**
+     * Convert the Lavacharts object to JSON
+     *
+     * @since 3.2.0
+     * @return string
+     */
+    public function toJson()
+    {
+        return json_encode($this);
+    }
+
+    /**
+     * Custom serialization of the library
+     *
+     * @since 3.2.0
+     * @return array
+     */
+    public function jsonSerialize()
+    {
+        return $this->toArray();
     }
 
     /**
@@ -160,35 +236,34 @@ class Lavacharts
      *
      * @since  3.0.3
      * @uses   \Khill\Lavacharts\DataTables\DataFactory
-     * @param  mixed $args
      * @return \Khill\Lavacharts\DataTables\DataTable
      */
-    public function DataTable($args = null)
+    public function DataTable()
     {
-        $dataFactory = __NAMESPACE__.'\\DataTables\\DataFactory::DataTable';
-
-        return call_user_func_array($dataFactory, func_get_args());
+        return call_user_func_array(
+            [DataFactory::class, 'DataTable'], func_get_args()
+        );
     }
 
     /**
      * Create a new Dashboard
      *
      * @since  3.0.0
-     * @param  string                                 $label
-     * @param  \Khill\Lavacharts\DataTables\DataTable $dataTable
+     * @param  string    $label
+     * @param  DataTable $dataTable
      * @return \Khill\Lavacharts\Dashboards\Dashboard
      */
     public function Dashboard($label, DataTable $dataTable)
     {
+        $label = new Label($label);
+
         if ($this->exists('Dashboard', $label)) {
-            $dashboard = $this->volcano->get('Dashboard', $label);
-        } else {
-            $dashboard = $this->volcano->store(
-                $this->dashFactory->create(func_get_args())
-            );
+            return $this->volcano->get('Dashboard', $label);
         }
 
-        return $dashboard;
+        return $this->volcano->store(
+            $this->dashFactory->create(func_get_args())
+        );
     }
 
     /**
@@ -224,12 +299,37 @@ class Lavacharts
     }
 
     /**
+     * Returns the Volcano instance.
+     *
+     * @return Volcano
+     */
+    public function getVolcano()
+    {
+        return $this->volcano;
+    }
+
+    /**
+     * Returns the current locale used in the DataTable
+     *
+     * @deprecated 3.2.0
+     * @since  3.1.0
+     * @return string
+     */
+    public function getLocale()
+    {
+        return $this->options['locale'];
+    }
+
+    /**
      * Locales are used to customize text for a country or language.
      *
      * This will affect the formatting of values such as currencies, dates, and numbers.
      *
      * By default, Lavacharts is loaded with the "en" locale. You can override this default
      * by explicitly specifying a locale when creating the DataTable.
+     *
+     * @deprecated 3.2.0 Set this option with the constructor, or with
+     *                   $lava->options->set('locale', 'en');
      *
      * @since  3.1.0
      * @param  string $locale
@@ -238,19 +338,9 @@ class Lavacharts
      */
     public function setLocale($locale = 'en')
     {
-        $this->locale = new StringValue($locale);
+        $this->options['locale'] = new StringValue($locale);
 
         return $this;
-    }
-    /**
-     * Returns the current locale used in the DataTable
-     *
-     * @since  3.1.0
-     * @return string
-     */
-    public function getLocale()
-    {
-        return $this->locale;
     }
 
     /**
@@ -259,27 +349,27 @@ class Lavacharts
      * Will be depreciating jsapi in the future
      *
      * @since  3.0.3
+     * @param array $options
      * @return string Google Chart API and lava.js script blocks
      */
-    public function lavajs()
+    public function lavajs(array $options = [])
     {
-        $config = [
-            'locale' => $this->locale
-        ];
+        $this->options->merge($options);
 
-        return (string) $this->scriptManager->getLavaJsModule($config);
+        return (string) $this->scriptManager->getLavaJs($this->options);
     }
 
     /**
      * Outputs the link to the Google JSAPI
      *
-     * @since      2.3.0
      * @deprecated 3.0.3
+     * @since      2.3.0
+     * @param array $options
      * @return string Google Chart API and lava.js script blocks
      */
-    public function jsapi()
+    public function jsapi(array $options = [])
     {
-        return $this->lavajs();
+        return $this->lavajs($options);
     }
 
     /**
@@ -309,15 +399,15 @@ class Lavacharts
      * @uses   \Khill\Lavacharts\Values\Label
      * @param  string $type  Type of Chart or Dashboard.
      * @param  string $label Label of the Chart or Dashboard.
-     * @return \Khill\Lavacharts\Support\Contracts\RenderableInterface
-     * @throws \Khill\Lavacharts\Exceptions\InvalidLavaObject
+     * @return Renderable
+     * @throws \Khill\Lavacharts\Exceptions\InvalidRenderable
      */
     public function fetch($type, $label)
     {
         $label = new Label($label);
 
         if (strpos($type, 'Chart') === false && $type != 'Dashboard') {
-            throw new InvalidLavaObject($type);
+            throw new InvalidRenderable($type);
         }
 
         return $this->volcano->get($type, $label);
@@ -327,8 +417,8 @@ class Lavacharts
      * Stores a existing Chart or Dashboard into the volcano storage.
      *
      * @since  3.0.0
-     * @param  \Khill\Lavacharts\Support\Contracts\RenderableInterface $renderable A Chart or Dashboard.
-     * @return \Khill\Lavacharts\Support\Contracts\RenderableInterface
+     * @param  Renderable $renderable A Chart or Dashboard.
+     * @return Renderable
      */
     public function store(Renderable $renderable)
     {
@@ -378,26 +468,31 @@ class Lavacharts
     }
 
     /**
-     * Renders all charts and dashboards that have been defined
+     * Renders all charts and dashboards that have been defined.
+     *
+     *
+     * Options can be passed in to override the default config.
+     * Available options are defined in src/Laravel/config/lavacharts.php
      *
      * @since  3.1.0
+     * @param array $options Options for rendering
      * @return string
      */
-    public function renderAll()
+    public function renderAll(array $options = [])
     {
-        $output = '';
+        $this->scriptManager->getOptions()->merge($options);
 
-        if ($this->scriptManager->lavaJsRendered() === false) {
-            $output = $this->scriptManager->getLavaJsModule();
-        }
+        $output = $this->scriptManager->getLavaJs($this->options);
 
         $renderables = $this->volcano->getAll();
 
         foreach ($renderables as $renderable) {
-            $output .= $this->scriptManager->getOutputBuffer($renderable);
+            $output->append(
+                $this->scriptManager->getOutputBuffer($renderable)
+            );
         }
 
-        return $output;
+        return $output->getContents();
     }
 
     /**
@@ -421,6 +516,7 @@ class Lavacharts
         /** @var \Khill\Lavacharts\Charts\Chart $chart */
         $chart = $this->volcano->get($type, $label);
 
+<<<<<<< HEAD
         if ($elementId === null) {
             $elementId = $chart->getElementId();
         }
@@ -428,6 +524,9 @@ class Lavacharts
         if ($elementId instanceof ElementId) {
             $chart->setElementId($elementId);
         }
+=======
+        $chart->setElementId($elementId);
+>>>>>>> a4edf0a4d82aba848efa07ff10b537d640d4f91b
 
         $buffer = $this->scriptManager->getOutputBuffer($chart);
 
@@ -488,19 +587,5 @@ class Lavacharts
         } else {
             return false;
         }
-    }
-
-    /**
-     * Initialize the default options from file while overriding with user
-     * passed values.
-     *
-     * @param array $options
-     * @return void
-     */
-    private function initializeOptions(array $options)
-    {
-        $this->setOptions(Config::getDefault());
-
-        $this->options->merge($options);
     }
 }

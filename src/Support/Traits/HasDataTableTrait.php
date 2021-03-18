@@ -1,8 +1,9 @@
 <?php
 
-namespace Khill\Lavacharts\Support\Contracts;
+namespace Khill\Lavacharts\Support\Traits;
 
-use \Khill\Lavacharts\DataTables\DataTable;
+use Khill\Lavacharts\DataTables\DataTable;
+use Khill\Lavacharts\Support\Contracts\DataInterface;
 
 /**
  * Trait DataTableTrait
@@ -11,36 +12,44 @@ use \Khill\Lavacharts\DataTables\DataTable;
  *
  *
  * @package   Khill\Lavacharts\Support\Traits
+ * @since     3.1.6
  * @author    Kevin Hill <kevinkhill@gmail.com>
  * @copyright (c) 2017, KHill Designs
  * @link      http://github.com/kevinkhill/lavacharts GitHub Repository Page
  * @link      http://lavacharts.com                   Official Docs Site
  * @license   http://opensource.org/licenses/MIT      MIT
  */
-interface DataTableInterface
+trait HasDataTableTrait
 {
+    /**
+     * Datatable for the renderable.
+     *
+     * @var DataTable
+     */
+    protected $datatable;
+
     /**
      * Sets the DataTable
      *
      * @since  3.1.0
-     * @param  \Khill\Lavacharts\DataTables\DataTable $datatable
+     * @param  DataInterface $data
      * @return self
      */
-    public function setDataTable(DataTable $datatable);
+    public function setDataTable(DataInterface $data)
+    {
+        $this->datatable = $data;
+
+        return $this;
+    }
 
     /**
      * Returns the DataTable
      *
      * @since  3.0.0
-     * @return \Khill\Lavacharts\DataTables\DataTable
+     * @return DataTable
      */
-    public function getDataTable();
-
-    /**
-     * Returns a JSON string representation of the datatable.
-     *
-     * @since  2.5.0
-     * @return string
-     */
-    public function getDataTableJson();
+    public function getDataTable()
+    {
+        return $this->datatable;
+    }
 }

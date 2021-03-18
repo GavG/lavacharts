@@ -6,7 +6,8 @@
         "graphs",
         "google",
         "laravel",
-        "symfony"
+        "symfony",
+        "angular"
     ],
     "homepage": "http://lavacharts.com",
     "license": "MIT",
@@ -29,8 +30,13 @@
         "khill/datatableplus": "Adds extra features to DataTables such as csv and laravel collection parsing."
     },
     "require": {
+<<<<<<< HEAD
         "php": "^7.2",
         "nesbot/carbon": "^2.31"
+=======
+        "php": ">=5.5.0",
+        "nesbot/carbon": "~1.14"
+>>>>>>> a4edf0a4d82aba848efa07ff10b537d640d4f91b
     },
     "autoload": {
         "psr-4": {
@@ -40,7 +46,7 @@
     "require-dev": {
         "phpunit/phpunit": "~4.8",
         "mockery/mockery": "~0.9",
-        "squizlabs/php_codesniffer": "~2.5",
+        "squizlabs/php_codesniffer": "3.*",
         "satooshi/php-coveralls": "~1.0",
         "codeclimate/php-test-reporter": "~0.3"
     },
@@ -54,8 +60,8 @@
         "cs": "phpcs --standard=PSR2 src tests",
         "cbf" : "phpcbf --standard=PSR2 src tests",
         "version": "php -r \"require(__DIR__.\\\"/src/Lavacharts.php\\\");echo \\Khill\\Lavacharts\\Lavacharts::VERSION;\"",
-        "lavajs:release" : "gulp --cwd javascript release && git add javascript/dist/lava.js && git commit -m 'Releasing new build of the lava.js module' && git push",
-        "lavajs:gulp" : "gulp --cwd javascript",
+        "lavajs:release" : "./node_modules/.bin/gulp --cwd javascript release && git add javascript/dist/lava.js && git commit -m 'Releasing new build of the lava.js module' && git push",
+        "lavajs:gulp" : "./node_modules/.bin/gulp --cwd javascript",
         "lavajs:pull" : "git subtree --prefix=javascript pull lavajs master",
         "lavajs:push" : "git subtree --prefix=javascript push lavajs master"
     },

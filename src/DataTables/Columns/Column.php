@@ -3,8 +3,14 @@
 namespace Khill\Lavacharts\DataTables\Columns;
 
 use Khill\Lavacharts\DataTables\Formats\Format;
-use Khill\Lavacharts\Support\Customizable;
+use Khill\Lavacharts\Exceptions\InvalidColumnType;
+use Khill\Lavacharts\Support\Contracts\Arrayable;
+use Khill\Lavacharts\Support\Contracts\Jsonable;
+use Khill\Lavacharts\Support\Contracts\Customizable;
+use Khill\Lavacharts\Support\Traits\ArrayToJsonTrait as ArrayToJson;
+use Khill\Lavacharts\Support\Traits\HasOptionsTrait as HasOptions;
 use Khill\Lavacharts\Values\Role;
+use Khill\Lavacharts\Values\StringValue;
 
 /**
  * Column Object
@@ -12,16 +18,33 @@ use Khill\Lavacharts\Values\Role;
  * The Column object is used to define the different columns for a DataTable.
  *
  *
- * @package   Khill\Lavacharts\DataTables\Columns
- * @since     3.0.0
- * @author    Kevin Hill <kevinkhill@gmail.com>
+ * @package       Khill\Lavacharts\DataTables\Columns
+ * @since         3.0.0
+ * @author        Kevin Hill <kevinkhill@gmail.com>
  * @copyright (c) 2017, KHill Designs
- * @link      http://github.com/kevinkhill/lavacharts GitHub Repository Page
- * @link      http://lavacharts.com                   Official Docs Site
- * @license   http://opensource.org/licenses/MIT      MIT
+ * @link          http://github.com/kevinkhill/lavacharts GitHub Repository Page
+ * @link          http://lavacharts.com                   Official Docs Site
+ * @license       http://opensource.org/licenses/MIT      MIT
  */
-class Column extends Customizable
+class Column implements Customizable, Arrayable, Jsonable
 {
+    use HasOptions, ArrayToJson;
+
+    /**
+     * Valid column types
+     *
+     * @var array
+     */
+    public static $TYPES = [
+        'role',
+        'string',
+        'number',
+        'boolean',
+        'date',
+        'datetime',
+        'timeofday',
+    ];
+
     /**
      * Column type.
      *
@@ -34,39 +57,64 @@ class Column extends Customizable
      *
      * @var string
      */
-    protected $label = '';
+    protected $label;
 
     /**
      * Column formatter.
      *
-     * @var \Khill\Lavacharts\DataTables\Formats\Format
+     * @var Format
      */
-    protected $format = null;
+    protected $format;
 
     /**
      * Column role.
      *
      * @var string
      */
-    protected $role = null;
+    protected $role;
 
     /**
      * Creates a new Column with the defined label.
      *
-     * @param  string                                      $type    Column type.
-     * @param  string                                      $label   Column label (optional).
-     * @param  \Khill\Lavacharts\DataTables\Formats\Format $format  Column format(optional).
-     * @param  \Khill\Lavacharts\Values\Role               $role    Column role (optional).
-     * @param  array                                       $options Column options (optional).
+     * @param  string $type    Column type
+     * @param  string $label   Column label (optional)
+     * @param  Format $format  Column format(optional)
+     * @param  Role   $role    Column role (optional)
+     * @param  array  $options Column options (optional)
      */
-    public function __construct($type, $label = '', Format $format = null, Role $role = null, array $options = [])
+    public function __construct(
+        $type, $label = '', Format $format = null, Role $role = null, array $options = []
+    )
     {
-        parent::__construct($options);
+        $this->setOptions($options);
 
         $this->type   = $type;
         $this->label  = $label;
         $this->format = $format;
         $this->role   = $role;
+    }
+
+    /**
+     * Get a new instance of the ColumnBuilder
+     *
+     * @return ColumnBuilder
+     */
+    public static function createBuilder()
+    {
+        return new ColumnBuilder;
+    }
+
+    /**
+     * Checks if a given type is a valid column type
+     *
+     * @param  string $type
+     * @throws \Khill\Lavacharts\Exceptions\InvalidColumnType
+     */
+    public static function isValidType($type)
+    {
+        if (in_array($type, self::$types, true) === false) {
+            throw new InvalidColumnType($type, self::$TYPES);
+        }
     }
 
     /**
@@ -92,11 +140,21 @@ class Column extends Customizable
     /**
      * Returns the column formatter.
      *
-     * @return \Khill\Lavacharts\DataTables\Formats\Format
+     * @return Format
      */
     public function getFormat()
     {
         return $this->format;
+    }
+
+    /**
+     * Sets the formatter for the column.
+     *
+     * @param Format $format
+     */
+    public function setFormat(Format $format)
+    {
+        $this->format = $format;
     }
 
     /**
@@ -120,28 +178,28 @@ class Column extends Customizable
     }
 
     /**
-     * Custom json serialization of the column.
+     * Return the Column as an array.
      *
      * @return array
      */
-    public function jsonSerialize()
+    public function toArray()
     {
-        $values = [
-            'type' => $this->type
+        $column = [
+            'type' => $this->type,
         ];
 
-        if (is_string($this->label) && !empty($this->label)) {
-            $values['label'] = $this->label;
+        if (StringValue::isNonEmpty($this->label)) {
+            $column['label'] = $this->label;
         }
 
         if ($this->role instanceof Role) {
-            $values['p'] = ['role' => (string) $this->role];
+            $column['p'] = ['role' => (string) $this->role];
 
             if ($this->hasOptions()) {
-                $values['p'] = array_merge($values['p'], $this->getOptions());
+                $column['p'] = array_merge($column['p'], $this->options);
             }
         }
 
-        return $values;
+        return $column;
     }
 }

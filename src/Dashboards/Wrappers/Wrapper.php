@@ -2,11 +2,12 @@
 
 namespace Khill\Lavacharts\Dashboards\Wrappers;
 
+use Khill\Lavacharts\Support\Contracts\Arrayable;
 use Khill\Lavacharts\Values\ElementId;
 use Khill\Lavacharts\Support\Traits\ElementIdTrait as HasElementId;
-use Khill\Lavacharts\Support\Contracts\WrappableInterface as Wrappable;
-use Khill\Lavacharts\Support\Contracts\JsonableInterface as Jsonable;
-use Khill\Lavacharts\Support\Contracts\JsClassInterface as JsClass;
+use Khill\Lavacharts\Support\Contracts\Wrappable;
+use Khill\Lavacharts\Support\Contracts\Jsonable;
+use Khill\Lavacharts\Support\Contracts\JsClass;
 
 /**
  * Class Wrapper
@@ -22,14 +23,14 @@ use Khill\Lavacharts\Support\Contracts\JsClassInterface as JsClass;
  * @link      http://lavacharts.com                   Official Docs Site
  * @license   http://opensource.org/licenses/MIT      MIT
  */
-class Wrapper implements \JsonSerializable, Jsonable, JsClass
+class Wrapper implements Arrayable, Jsonable, JsClass
 {
     use HasElementId;
 
     /**
      * The contents of the wrap, either Chart or Filter.
      *
-     * @var \Khill\Lavacharts\Support\Contracts\WrappableInterface
+     * @var \Khill\Lavacharts\Support\Contracts\Wrappable
      */
     protected $contents;
 
@@ -43,8 +44,8 @@ class Wrapper implements \JsonSerializable, Jsonable, JsClass
     /**
      * Builds a new Wrapper object.
      *
-     * @param \Khill\Lavacharts\Support\Contracts\WrappableInterface $itemToWrap
-     * @param \Khill\Lavacharts\Values\ElementId                     $elementId
+     * @param \Khill\Lavacharts\Support\Contracts\Wrappable $itemToWrap
+     * @param \Khill\Lavacharts\Values\ElementId            $elementId
      */
     public function __construct(Wrappable $itemToWrap, ElementId $elementId)
     {
@@ -52,10 +53,15 @@ class Wrapper implements \JsonSerializable, Jsonable, JsClass
         $this->elementId = $elementId;
     }
 
+    public static function create($type)
+    {
+
+    }
+
     /**
      * Unwraps and returns the wrapped object.
      *
-     * @return \Khill\Lavacharts\Support\Contracts\WrappableInterface
+     * @return \Khill\Lavacharts\Support\Contracts\Wrappable
      */
     public function unwrap()
     {
@@ -63,14 +69,14 @@ class Wrapper implements \JsonSerializable, Jsonable, JsClass
     }
 
     /**
-     * Custom serialization of the Wrapper.
+     * Array representation of the Wrapper
      *
      * @return array
      */
-    public function jsonSerialize()
+    public function toArray()
     {
         return [
-            'options'     => $this->contents,
+            'options'     => $this->contents->getOptions(),
             'containerId' => (string) $this->elementId,
             $this->contents->getWrapType() => $this->contents->getType()
         ];
@@ -84,6 +90,16 @@ class Wrapper implements \JsonSerializable, Jsonable, JsClass
     public function toJson()
     {
         return json_encode($this);
+    }
+
+    /**
+     * Custom serialization of the Wrapper.
+     *
+     * @return array
+     */
+    public function jsonSerialize()
+    {
+        return $this->toArray();
     }
 
     /**

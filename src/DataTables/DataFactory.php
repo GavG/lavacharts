@@ -2,7 +2,9 @@
 
 namespace Khill\Lavacharts\DataTables;
 
+use Closure;
 use Khill\Lavacharts\DataTables\Cells\Cell;
+use Khill\Lavacharts\DataTablePlus\DataTablePlus;
 use Khill\Lavacharts\Exceptions\InvalidJson;
 
 /**
@@ -25,36 +27,47 @@ class DataFactory
     /**
      * Creates a new DataTable
      *
-     * This method will create an empty DataTable, with a timezone if
-     * passed a string as the first parameter or with no timezone if passed nothing.
+     * There are four signatures to this method:
      *
-     * If the first parameter is an array, then the array will be attempted to be
-     * used as columns for a new DataTable.
+     * - 0 parameters: An empty DataTable is created with the default options.
      *
-     * If given an array for the second parameter, then it will be interpreted as
-     * row definitions.
+     * - 1 parameter: The argument must be an array, overriding the default options.
      *
-     * @param  mixed  $columns  Array of columns or timezone
-     * @param  array  $rows     Array of rows
-     * @param  string $timezone Timezone to use while using Carbon
+     * - 2 parameters: The first arg is now considered to be Column definitions that
+     *   will be passed into DataTable#addColumns() and the second arg is options.
+     *
+     * - 3 parameters: The first arg is now considered to be Row definitions that
+     *   will be passed into DataTable#addRows(), the second arg now Column definitions
+     *   and the last arg is options.
+     *
+     * @since  3.2.0 Variable arguments
      * @return \Khill\Lavacharts\DataTables\DataTable
      */
-    public static function DataTable($columns = null, array $rows = [], $timezone = null)
+    public static function DataTable(...$args)
     {
-        if ($columns === null || gettype($columns) === 'string') {
-            $timezone = $columns;
-        }
+        $datatable = self::emptyDataTable();
 
-        $datatable = self::emptyDataTable($timezone);
+        switch (count($args)) {
+            case 1:
+                $datatable->setOptions($args[0]);
+                break;
 
-        if (is_array($columns)) {
-            $datatable->addColumns($columns);
-        }
+            case 2:
+                if (is_array($args[1])) {
+                    $datatable->addColumns($args[1]);
+                }
+                break;
 
-        if (is_array($rows)) {
-            $datatable->addRows($rows);
-        } else if ($rows instanceof \Closure) {
-            $datatable->addRows($rows());
+            case 3:
+                if (is_array($args[2])) {
+                    $datatable->addRows($args[2]);
+                } elseif ($args[2] instanceof Closure) {
+                    $datatable->addRows($args[2]());
+                }
+                break;
+
+            default:
+                break;
         }
 
         return $datatable;
@@ -65,18 +78,18 @@ class DataFactory
      *
      * This method will create an empty DataTable, with or without a timezone.
      *
-     * @param  string $timezone Timezone to use while using Carbon
+     * @param array $options
      * @return \Khill\Lavacharts\DataTables\DataTable
      */
-    private static function emptyDataTable($timezone)
+    private static function emptyDataTable(array $options = [])
     {
-        $datatable = '\Khill\Lavacharts\DataTablePlus\DataTablePlus';
+        $datatable = DataTablePlus::class;
 
         if (class_exists($datatable) === false) {
-            $datatable = '\Khill\Lavacharts\DataTables\DataTable';
+            $datatable = DataTable::class;
         }
 
-        return new $datatable($timezone);
+        return new $datatable($options);
     }
 
     /**
@@ -205,7 +218,7 @@ class DataFactory
      * @param  array  $p Cell specific customization options
      * @return \Khill\Lavacharts\DataTables\Cells\Cell
      */
-    public static function cell($v, $f = '', $p = [])
+    public static function Cell($v, $f = '', $p = [])
     {
         return new Cell($v, $f, $p);
     }

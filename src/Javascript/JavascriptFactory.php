@@ -2,6 +2,7 @@
 
 namespace Khill\Lavacharts\Javascript;
 
+use Khill\Lavacharts\Support\Contracts\Renderable;
 use Khill\Lavacharts\Support\Buffer;
 
 /**
@@ -24,7 +25,7 @@ class JavascriptFactory
     /**
      * Javascript output buffer.
      *
-     * @var \Khill\Lavacharts\Support\Buffer
+     * @var Buffer
      */
     protected $buffer;
 
@@ -44,19 +45,17 @@ class JavascriptFactory
 
     /**
      * JavascriptFactory constructor.
-     *
-     * @param string $outputTemplate
      */
-     public function __construct($outputTemplate)
+    public function __construct()
     {
         $this->template = file_get_contents(
-            realpath(__DIR__ . '/../../javascript/templates/' . $outputTemplate)
+            realpath(__DIR__ . '/../../javascript/templates/' . $this->template)
         );
 
         $this->buffer = new Buffer($this->template);
 
         /** Replacing the template variables with values */
-        foreach ($this->getTemplateVars() as $var => $value) {
+        foreach ($this->templateVars as $var => $value) {
             $this->buffer->replace('<'.$var.'>', $value);
         }
 
@@ -64,15 +63,15 @@ class JavascriptFactory
         $this->buffer->pregReplace('/"Date\(((:?[0-9]+,?)+)\)"/', 'new Date(\1)');
 
         /** Converting string nulls to actual nulls */
-        $this->buffer->pregReplace('/"null"/', 'null');
+        $this->buffer->pregReplace('/"null"/', 'NULL');
     }
 
     /**
      * Returns the output buffer for the javascript.
      *
-     * @return \Khill\Lavacharts\Support\Buffer
+     * @return Buffer
      */
-    public function getOutputBuffer()
+    public function getBuffer()
     {
         return $this->buffer;
     }

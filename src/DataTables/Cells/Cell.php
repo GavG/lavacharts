@@ -2,8 +2,13 @@
 
 namespace Khill\Lavacharts\DataTables\Cells;
 
-use Khill\Lavacharts\Exceptions\InvalidParamType;
-use Khill\Lavacharts\Support\Customizable;
+use Khill\Lavacharts\Exceptions\InvalidArgumentException;
+use Khill\Lavacharts\Support\Contracts\Arrayable;
+use Khill\Lavacharts\Support\Contracts\Customizable;
+use Khill\Lavacharts\Support\Contracts\Jsonable;
+use Khill\Lavacharts\Support\Traits\ArrayToJsonTrait as ArrayToJson;
+use Khill\Lavacharts\Support\Traits\HasOptionsTrait as HasOptions;
+use Khill\Lavacharts\Values\StringValue;
 
 /**
  * DataCell Object
@@ -18,28 +23,34 @@ use Khill\Lavacharts\Support\Customizable;
  * @link      http://lavacharts.com                   Official Docs Site
  * @license   http://opensource.org/licenses/MIT      MIT
  */
-class Cell extends Customizable
+class Cell implements Customizable, Arrayable, Jsonable
 {
+    use HasOptions, ArrayToJson;
+
     /**
      * The cell value.
      *
      * @var string
      */
-    protected $v;
+    protected $value;
 
     /**
-     * A string version of the v value. (Optional)
+     * A string version of the value. (Optional)
      *
      * @var string
      */
-    protected $f;
+    protected $format;
 
     /**
-     * An array that is a map of custom values applied to the cell. (Optional)
+     * Create a new Cell from an array of arguments for the constructor.
      *
-     * @var array
+     * @param array $cellDef
+     * @return Cell
      */
-    protected $p;
+    public static function create($cellDef)
+    {
+        return call_user_func_array([Cell::class, '__construct'], $cellDef);
+    }
 
     /**
      * Defines a Cell for a DataTable
@@ -54,26 +65,28 @@ class Cell extends Customizable
      * numeric cell values of 1, 2, and 3.
      *
      *
-     * @param  string       $v The cell value
-     * @param  string       $f A string version of the v value
-     * @param  array|string $p A map of custom values applied to the cell
+     * @param  string $value   The cell value
+     * @param  string $format  A string version of the v value
+     * @param  array  $options A map of custom values applied to the cell
      * @throws \Khill\Lavacharts\Exceptions\InvalidParamType
      */
-    public function __construct($v, $f = '', array $p = [])
+    public function __construct($value, $format = null, array $options = [])
     {
-        if (is_string($f) === false) {
-            throw new InvalidParamType($f, 'string');
+        if (StringValue::isNonEmpty($format) || $format === null) {
+            $this->format = $format;
+        } else {
+            throw new InvalidArgumentException($format, 'string');
         }
 
-        $this->v = $v;
-        $this->f = $f;
+        $this->value = $value;
 
-        parent::__construct($p);
+        $this->setOptions($options);
     }
 
     /**
      * Mapping the 'p' attribute of the cell to it's options.
      *
+     * @deprecated 3.2.0 Why did I add this?
      * @since  3.1.0
      * @param  string $attr
      * @return array
@@ -81,13 +94,14 @@ class Cell extends Customizable
     public function __get($attr)
     {
         if ($attr == 'p') {
-            return $this->getOptions();
+            return $this->options->toArray();
         }
     }
 
     /**
      * Allowing the 'p' attribute to be checked for options by using the hasOptions method.
      *
+     * @deprecated 3.2.0 Why did I add this?
      * @since  3.1.0
      * @param  string $attr
      * @return bool
@@ -106,7 +120,7 @@ class Cell extends Customizable
      */
     public function getValue()
     {
-        return $this->v;
+        return $this->value;
     }
 
     /**
@@ -116,36 +130,26 @@ class Cell extends Customizable
      */
     public function getFormat()
     {
-        return $this->f;
+        return $this->format;
     }
 
     /**
-     * Returns the custom values of the cell.
-     *
-     * @return string
-     */
-    public function getCustomValues()
-    {
-        return $this->f;
-    }
-
-    /**
-     * Custom serialization of the Cell
+     * Return the Cell as an array.
      *
      * @return array
      */
-    public function jsonSerialize()
+    public function toArray()
     {
-        $json = ['v' => $this->v];
+        $cell = ['v' => $this->value];
 
-        if ( ! empty($this->f)) {
-            $json['f'] = $this->f;
+        if ($this->format !== null) {
+            $cell['f'] = $this->format;
         }
 
-        if ( ! empty($this->options)) {
-            $json['p'] = $this->getOptions();
+        if ($this->hasOptions()) {
+            $cell['p'] = $this->options->toArray();
         }
 
-        return $json;
+        return $cell;
     }
 }

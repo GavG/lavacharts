@@ -2,10 +2,12 @@
 
 namespace Khill\Lavacharts\Support;
 
-use ArrayAccess;
-use JsonSerializable;
+use Countable;
+use Khill\Lavacharts\Exceptions\InvalidOptions;
+use Khill\Lavacharts\Exceptions\UndefinedOptionException;
 use Khill\Lavacharts\Support\Contracts\Arrayable;
 use Khill\Lavacharts\Support\Contracts\Jsonable;
+use Khill\Lavacharts\Support\Traits\ArrayToJsonTrait as ArrayToJson;
 
 /**
  * Options Class
@@ -23,16 +25,39 @@ use Khill\Lavacharts\Support\Contracts\Jsonable;
  * @license       http://opensource.org/licenses/MIT      MIT
  *
  * @property string elementId
+ * @property string datetime_format
  * @property string pngOutput
  */
-class Options implements Arrayable, Jsonable
+class Options implements Arrayable, Jsonable, Countable
 {
+    use ArrayToJson;
+
     /**
      * Customization options.
      *
      * @var array
      */
     protected $options;
+
+    /**
+     * Returns the default configuration options for Lavacharts
+     *
+     * @return array
+     */
+    public static function getDefault()
+    {
+        return require(__DIR__.'/../Laravel/config/lavacharts.php');
+    }
+
+    /**
+     * Returns a list of the options that can be set.
+     *
+     * @return array
+     */
+    public static function getAvailable()
+    {
+        return array_keys(self::getDefault());
+    }
 
     /**
      * Customizable constructor.
@@ -47,12 +72,17 @@ class Options implements Arrayable, Jsonable
     /**
      * Retrieve options as member properties
      *
-     * @param $option
-     * @return mixed|null
+     * @param  string $option
+     * @return mixed
+     * @throws \Khill\Lavacharts\Exceptions\UndefinedOptionException
      */
     function __get($option)
     {
-        return $this->has($option) ? $this->options[$option] : null;
+        if ( ! $this->has($option)) {
+            throw new UndefinedOptionException($option);
+        }
+
+        return $this->options[$option];
     }
 
     /**
@@ -63,6 +93,28 @@ class Options implements Arrayable, Jsonable
     function __toString()
     {
         return $this->toJson();
+    }
+
+    /**
+     * Setting an option by assigning to the class property.
+     *
+     * @param string $option
+     * @param mixed  $value
+     */
+    public function __set($option, $value)
+    {
+        $this->options[$option] = $value;
+    }
+
+    /**
+     * Check if an option has been set.
+     *
+     * @param string $option
+     * @return bool
+     */
+    public function has($option)
+    {
+        return array_key_exists($option, $this->options);
     }
 
     /**
@@ -81,7 +133,7 @@ class Options implements Arrayable, Jsonable
     }
 
     /**
-     * Sets the values of the customized class with an array of key value pairs.
+     * Sets the value of the given option.
      *
      * @param string $option
      * @param mixed  $value
@@ -92,14 +144,23 @@ class Options implements Arrayable, Jsonable
     }
 
     /**
-     * Check if an option has been set.
+     * Sets the value of the given option if it does not exist.
      *
-     * @param string $option
-     * @return bool
+     * Value is left unchanged if it is already set.
+     *
+     * @param  string $option
+     * @param  mixed  $value
+     * @return bool True if the value was set, otherwise false.
      */
-    public function has($option)
+    public function setIfNot($option, $value)
     {
-        return array_key_exists($option, $this->options);
+        if (!$this->has($option)) {
+            $this->options[$option] = $value;
+
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -117,6 +178,16 @@ class Options implements Arrayable, Jsonable
     }
 
     /**
+     * Count the number of options
+     *
+     * @return int
+     */
+    public function count()
+    {
+        return count($this->options);
+    }
+
+    /**
      * Get the instance as an array.
      *
      * @return array
@@ -124,25 +195,5 @@ class Options implements Arrayable, Jsonable
     public function toArray()
     {
         return $this->options;
-    }
-
-    /**
-     * Returns a customize JSON representation of an object.
-     *
-     * @return string
-     */
-    public function toJson()
-    {
-        return json_encode($this);
-    }
-
-    /**
-     * Custom serialization of the Options object.
-     *
-     * @return array
-     */
-    public function jsonSerialize()
-    {
-        return $this->toArray();
     }
 }

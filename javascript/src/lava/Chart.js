@@ -75,12 +75,24 @@ module.exports = (function() {
      * @public
      * @external "google.visualization.DataTable"
      * @see   {@link https://developers.google.com/chart/interactive/docs/reference#DataTable|DataTable Class}
-     * @param {object}        data      Json representation of a DataTable
-     * @param {Array.<Array>} data.cols Array of column definitions
-     * @param {Array.<Array>} data.rows Array of row definitions
+     * @param {object} payload Json representation of a DataTable
      */
-    Chart.prototype.setData = function (data) {
-        this.data = new google.visualization.DataTable(data);
+    Chart.prototype.setData = function (payload) {
+         // If a DataTable#toJson() payload is received, with formatted columns,
+         // then data.data will be defined, and used as the DataTable
+        if (typeof payload.data === 'object') {
+            payload = payload.data;
+        }
+
+        // Since Google compiles their classes, we can't use instanceof to check since
+        // it is no longer called a "DataTable" (it's "gvjs_P" but that could change...)
+        if (typeof payload.getTableProperties === 'function') {
+            this.data = payload;
+
+        // Otherwise assume it is a JSON representation of a DataTable and create one.
+        } else {
+            this.data = new google.visualization.DataTable(payload);
+        }
     };
 
     /**
@@ -100,7 +112,7 @@ module.exports = (function() {
      * @param {string|int} png
      */
     Chart.prototype.setPngOutput = function (png) {
-        this.pngOutput = Boolean(typeof png == 'undefined' ? false : png);
+        this.pngOutput = Boolean(typeof png === 'undefined' ? false : png);
     };
 
     /**

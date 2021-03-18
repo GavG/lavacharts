@@ -2,15 +2,18 @@
 
 namespace Khill\Lavacharts\Dashboards;
 
-use \Khill\Lavacharts\Values\Label;
-use \Khill\Lavacharts\Values\ElementId;
-use \Khill\Lavacharts\DataTables\DataTable;
-use \Khill\Lavacharts\Dashboards\Bindings\BindingFactory;
-use \Khill\Lavacharts\Support\Traits\DataTableTrait as HasDataTable;
-use \Khill\Lavacharts\Support\Traits\RenderableTrait as IsRenderable;
-use \Khill\Lavacharts\Support\Contracts\DataTableInterface as DataTables;
-use \Khill\Lavacharts\Support\Contracts\RenderableInterface as Renderable;
-use \Khill\Lavacharts\Support\Contracts\VisualizationInterface as Visualization;
+use Khill\Lavacharts\Javascript\DashboardJsFactory;
+use Khill\Lavacharts\Values\Label;
+use Khill\Lavacharts\Values\ElementId;
+use Khill\Lavacharts\Dashboards\Bindings\Binding;
+use Khill\Lavacharts\Dashboards\Bindings\BindingFactory;
+use Khill\Lavacharts\Support\Renderable;
+use Khill\Lavacharts\Support\Contracts\Customizable;
+use Khill\Lavacharts\Support\Contracts\DataTable as DataInterface;
+use Khill\Lavacharts\Support\Contracts\JsFactory;
+use Khill\Lavacharts\Support\Contracts\JsPackage;
+use Khill\Lavacharts\Support\Traits\HasOptionsTrait as HasOptions;
+use Khill\Lavacharts\Support\Traits\HasDataTableTrait as HasDataTable;
 
 /**
  * Class Dashboard
@@ -28,12 +31,12 @@ use \Khill\Lavacharts\Support\Contracts\VisualizationInterface as Visualization;
  * @link      http://lavacharts.com                   Official Docs Site
  * @license   http://opensource.org/licenses/MIT      MIT
  */
-class Dashboard implements DataTables, Renderable, Visualization
+class Dashboard extends Renderable implements DataInterface, Customizable, JsFactory, JsPackage
 {
-    use HasDataTable, IsRenderable;
+    use HasDataTable, HasOptions;
 
     /**
-     * Javascript chart type.
+     * Javascript type.
      *
      * @var string
      */
@@ -56,14 +59,14 @@ class Dashboard implements DataTables, Renderable, Visualization
     /**
      * Binding Factory for creating new bindings
      *
-     * @var \Khill\Lavacharts\Dashboards\Bindings\BindingFactory
+     * @var BindingFactory
      */
     private $bindingFactory;
 
     /**
      * Array of Binding objects, mapping controls to charts.
      *
-     * @var array
+     * @var Binding[]
      */
     private $bindings = [];
 
@@ -72,20 +75,16 @@ class Dashboard implements DataTables, Renderable, Visualization
      *
      * If passed an array of bindings, they will be applied upon creation.
      *
-     * @param \Khill\Lavacharts\Values\Label         $label Label for the Dashboard
-     * @param \Khill\Lavacharts\DataTables\DataTable $datatable
-     * @param \Khill\Lavacharts\Values\ElementId     $elementId Element Id for the Dashboard
+     * @param \Khill\Lavacharts\Values\Label                $label Label for the Dashboard
+     * @param \Khill\Lavacharts\Support\Contracts\DataTable $datatable
+     * @param \Khill\Lavacharts\Values\ElementId            $elementId Element Id for the Dashboard
      */
-    public function __construct(
-        Label $label,
-        DataTable $datatable,
-        ElementId $elementId = null
-    )
+    public function __construct(Label $label, DataInterface $data, ElementId $elementId = null)
     {
         $this->bindingFactory = new BindingFactory;
 
         $this->label     = $label;
-        $this->datatable = $datatable;
+        $this->datatable = $data;
         $this->elementId = $elementId;
     }
 
@@ -118,6 +117,16 @@ class Dashboard implements DataTables, Renderable, Visualization
     public function getJsClass()
     {
         return 'google.visualization.Dashboard';
+    }
+
+    /**
+     * Get the JsFactory for the chart.
+     *
+     * @return DashboardJsFactory
+     */
+    public function getJsFactory()
+    {
+        return new DashboardJsFactory($this);
     }
 
     /**
@@ -184,10 +193,30 @@ class Dashboard implements DataTables, Renderable, Visualization
     /**
      * Fetch the dashboard's bindings.
      *
-     * @return array
+     * @return Binding[]
      */
     public function getBindings()
     {
         return $this->bindings;
+    }
+
+    /**
+     * Returns the type of renderable.
+     *
+     * @return string
+     */
+    public function getRenderableType()
+    {
+        // TODO: Implement getRenderableType() method.
+    }
+
+    /**
+     * Array representation of the Chart.
+     *
+     * @return array
+     */
+    public function toArray()
+    {
+        // TODO: Implement toArray() method.
     }
 }

@@ -26,7 +26,7 @@ trait HasOptionsTrait
      *
      * @var Options
      */
-    private $options;
+    protected $options;
 
     /**
      * Retrieves the Options object from the class.
@@ -50,5 +50,41 @@ trait HasOptionsTrait
         } else {
             $this->options = new Options($options);
         }
+    }
+
+    /**
+     * Merges two sets of options.
+     *
+     * @param array|Options $options
+     */
+    public function mergeOptions($options)
+    {
+        $this->options->merge($options);
+    }
+
+    /**
+     * Return whether or not the instance has any options.
+     *
+     * @return bool
+     */
+    public function hasOptions()
+    {
+        return count($this->options) > 0;
+    }
+
+    /**
+     * Initialize the default options from file while overriding with user
+     * passed values.
+     *
+     * @param array $options
+     * @return void
+     */
+    public function initOptions(array $options)
+    {
+        $defaults = Options::getDefault();
+
+        $this->setOptions($defaults);
+
+        $this->options->merge($options);
     }
 }

@@ -5,10 +5,12 @@ namespace Khill\Lavacharts\Javascript;
 use Khill\Lavacharts\Charts\Chart;
 use Khill\Lavacharts\Dashboards\Dashboard;
 use Khill\Lavacharts\Exceptions\ElementIdException;
-use Khill\Lavacharts\Support\Buffer;
+use Khill\Lavacharts\Support\Contracts\Customizable;
 use Khill\Lavacharts\Support\Options;
 use Khill\Lavacharts\Support\Traits\HasOptionsTrait as HasOptions;
-use Khill\Lavacharts\Support\Contracts\RenderableInterface as Renderable;
+use Khill\Lavacharts\Values\ElementId;
+use Khill\Lavacharts\Support\Buffer;
+use Khill\Lavacharts\Support\Renderable;
 
 /**
  * ScriptManager Class
@@ -26,7 +28,7 @@ use Khill\Lavacharts\Support\Contracts\RenderableInterface as Renderable;
  * @link       http://lavacharts.com                   Official Docs Site
  * @license    http://opensource.org/licenses/MIT      MIT
  */
-class ScriptManager
+class ScriptManager implements Customizable
 {
     use HasOptions;
 
@@ -61,11 +63,11 @@ class ScriptManager
     /**
      * ScriptManager constructor.
      *
-     * @param Options $options
+     * @param array $options
      */
-    function __construct(Options $options)
+    function __construct($options = [])
     {
-        $this->options = $options;
+        $this->setOptions($options);
     }
 
     /**
@@ -95,18 +97,15 @@ class ScriptManager
      * Gets the lava.js module.
      *
      * @param  array $config
-     * @return \Khill\Lavacharts\Support\Buffer
+     * @return Buffer
      */
-    public function getLavaJsModule(array $config = [])
+    public function getLavaJs(Options $options)
     {
-        $lavaJs = realpath(__DIR__ . self::LAVA_JS);
-        $buffer = new Buffer(file_get_contents($lavaJs));
-
-        $this->options->merge($config);
-
-        $buffer->pregReplace('/OPTIONS_JSON/', $this->options->toJson());
-
         $this->lavaJsRendered = true;
+
+        $buffer = $this->getLavaJsSource();
+
+        $buffer->pregReplace('/OPTIONS_JSON/', $options->toJson());
 
         return $buffer;
     }
@@ -115,8 +114,8 @@ class ScriptManager
      * Returns a buffer with the javascript of a renderable resource.
      *
      *
-     * @param  \Khill\Lavacharts\Support\Contracts\RenderableInterface $renderable
-     * @return \Khill\Lavacharts\Support\Buffer
+     * @param  Renderable $renderable
+     * @return Buffer
      * @throws \Khill\Lavacharts\Exceptions\ElementIdException
      */
     public function getOutputBuffer(Renderable $renderable)
@@ -125,15 +124,7 @@ class ScriptManager
             throw new ElementIdException($renderable);
         }
 
-        if ($renderable instanceof Dashboard) {
-            $jsFactory = new DashboardJsFactory($renderable);
-        }
-
-        if ($renderable instanceof Chart) {
-            $jsFactory = new ChartJsFactory($renderable);
-        }
-
-        $buffer = $jsFactory->getOutputBuffer();
+        $buffer = $renderable->getJsFactory()->getBuffer();
 
         return $buffer;
     }
@@ -141,8 +132,8 @@ class ScriptManager
     /**
      * Wraps a buffer with an html script tag
      *
-     * @param \Khill\Lavacharts\Support\Buffer $buffer
-     * @return \Khill\Lavacharts\Support\Buffer
+     * @param Buffer $buffer
+     * @return Buffer
      */
     private function scriptTagWrap(Buffer $buffer)
     {
@@ -151,5 +142,17 @@ class ScriptManager
                       ->prepend(PHP_EOL)
                       ->append(PHP_EOL)
                       ->append(self::JS_CLOSE);
+    }
+
+    /**
+     * Get the source of the lava.js module as a Buffer
+     *
+     * @return Buffer
+     */
+    private function getLavaJsSource()
+    {
+        $lavaJs = realpath(__DIR__ . self::LAVA_JS);
+
+        return new Buffer(file_get_contents($lavaJs));
     }
 }

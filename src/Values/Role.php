@@ -51,6 +51,19 @@ class Role extends StringValue
     }
 
     /**
+     * Type of role to check
+     *
+     * @param string $role
+     * @throws \Khill\Lavacharts\Exceptions\InvalidColumnRole
+     */
+    public static function check($role)
+    {
+        if ( ! self::isValid($role)) {
+            throw new InvalidColumnRole($role);
+        }
+    }
+
+    /**
      * Checks if a given value is a valid role.
      *
      * @since  3.1.0
@@ -59,10 +72,6 @@ class Role extends StringValue
      */
     public static function isValid($role)
     {
-        if (is_string($role) && in_array($role, static::$roles)) {
-            return true;
-        } else {
-            return false;
-        }
+        return in_array($role, static::$roles, true);
     }
 }

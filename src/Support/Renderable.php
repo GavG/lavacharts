@@ -2,64 +2,163 @@
 
 namespace Khill\Lavacharts\Support;
 
+use JsonSerializable;
+use Khill\Lavacharts\Exceptions\InvalidElementId;
+use Khill\Lavacharts\Exceptions\InvalidLabel;
+use Khill\Lavacharts\Javascript\ChartJsFactory;
+use Khill\Lavacharts\Javascript\DashboardJsFactory;
+use Khill\Lavacharts\Support\Contracts\Arrayable;
+use Khill\Lavacharts\Support\Contracts\Jsonable;
 use \Khill\Lavacharts\Values\Label;
 use \Khill\Lavacharts\Values\ElementId;
 use \Khill\Lavacharts\Support\Traits\ElementIdTrait as HasElementId;
 
 /**
- * Renderable Class
+ * Abstract Renderable Class
  *
  * This class is the parent to charts, dashboards, and controls since they
  * will need to be rendered onto the page.
  *
  * @package    Khill\Lavacharts\Support
- * @since      3.1.0
+ * @since      3.2.0
  * @author     Kevin Hill <kevinkhill@gmail.com>
  * @copyright  (c) 2017, KHill Designs
  * @link       http://github.com/kevinkhill/lavacharts GitHub Repository Page
  * @link       http://lavacharts.com                   Official Docs Site
  * @license    http://opensource.org/licenses/MIT MIT
  */
+<<<<<<< HEAD
 class Renderable
+=======
+abstract class Renderable implements Arrayable, Jsonable
+>>>>>>> a4edf0a4d82aba848efa07ff10b537d640d4f91b
 {
-    use HasElementId;
-
     /**
      * The renderable's unique label.
      *
-     * @var \Khill\Lavacharts\Values\Label
+     * @var Label
      */
     protected $label;
 
     /**
      * The renderable's unique elementId.
      *
-     * @var \Khill\Lavacharts\Values\ElementId
+     * @var ElementId
      */
     protected $elementId;
 
     /**
-     * Sets the renderable's ElementId or generates on from a string
+     * Defaulting to true so than all new Renderables can be rendered.
      *
-     * @param \Khill\Lavacharts\Values\Label     $label
-     * @param \Khill\Lavacharts\Values\ElementId $elementId
+     * @var bool
      */
-    public function __construct(Label $label, ElementId $elementId = null)
-    {
-        $this->label = $label;
+    protected $renderable = true;
 
-        if ($elementId === null) {
-            $this->generateElementId();
-        } else {
+    /**
+     * Array representation of the Chart.
+     *
+     * @return array
+     */
+    public abstract function toArray();
+
+    /**
+     * Get an instance of the specific JsFactory
+     *
+     * @return ChartJsFactory|DashboardJsFactory
+     */
+    public abstract function getJsFactory();
+
+    /**
+     * Return a JSON representation of the chart.
+     *
+     * @return string
+     */
+    public function toJson()
+    {
+        return json_encode($this);
+    }
+
+    /**
+     * Custom serialization of the chart.
+     *
+     * @return array
+     */
+    function jsonSerialize()
+    {
+        return $this->toArray();
+    }
+
+    /**
+     * Returns the ElementId.
+     *
+     * @return ElementId
+     */
+    public function getElementId()
+    {
+        return $this->elementId;
+    }
+
+    /**
+     * Returns the ElementId as a string.
+     *
+     * @return string
+     */
+    public function getElementIdStr()
+    {
+        return (string) $this->elementId;
+    }
+
+    /**
+     * Creates and/or sets the ElementId.
+     *
+     * @param  string|ElementId $elementId
+     * @throws InvalidElementId
+     */
+    public function setElementId($elementId)
+    {
+        if ($elementId instanceof ElementId) {
             $this->elementId = $elementId;
+        } else {
+            $this->elementId = new ElementId($elementId);
         }
+    }
+
+    /**
+     * Check to see if the renderable has it's elementId set.
+     *
+     * @since  3.1.0
+     * @return bool
+     */
+    public function hasElementId()
+    {
+        return isset($this->elementId);
+    }
+
+    /**
+     * Returns the label.
+     *
+     * @return Label
+     */
+    public function getLabel()
+    {
+        return $this->label;
+    }
+
+    /**
+     * Returns the label as a string.
+     *
+     * @return string
+     */
+    public function getLabelStr()
+    {
+        return (string) $this->label;
     }
 
     /**
      * Creates and/or sets the Label.
      *
-     * @param  string|\Khill\Lavacharts\Values\Label $label
-     * @throws \Khill\Lavacharts\Exceptions\InvalidLabel
+     * @param  string|Label $label
+     * @throws InvalidLabel
      */
     public function setLabel($label)
     {
@@ -71,41 +170,35 @@ class Renderable
     }
 
     /**
-     * Returns the label.
+     * Check to see if the renderable has it's label set.
      *
-     * @return \Khill\Lavacharts\Values\Label
+     * @since  3.2.0
+     * @return bool
      */
-    public function getLabel()
+    public function hasLabel()
     {
-        return $this->label;
+        return isset($this->label);
     }
 
     /**
-     * Returns the label.
+     * Sets the renderable status of the Chart
      *
-     * @return \Khill\Lavacharts\Values\Label
+     * @since  3.1.0
+     * @param bool $renderable
      */
-    public function getLabelStr()
+    public function setRenderable($renderable)
     {
-        return (string) $this->label;
+        $this->isRenderable = (bool) $renderable;
     }
 
     /**
-     * Generate an ElementId
+     * Returns the status of the renderability of the chart.
      *
-     * This method removes invalid characters from the chart label
-     * to use as an elementId.
-     *
-     * @link http://stackoverflow.com/a/11330527/2503458
-     * @access private
+     * @since  3.1.0
+     * @return bool
      */
-    private function generateElementId()
+    public function isRenderable()
     {
-        $string = strtolower((string) $this->label);
-        $string = preg_replace("/[^a-z0-9_\s-]/", "", $string);
-        $string = preg_replace("/[\s-]+/", " ", $string);
-        $string = preg_replace("/[\s_]/", "-", $string);
-
-        $this->setElementId($string);
+        return $this->renderable && $this->hasLabel() && $this->hasElementId();
     }
 }

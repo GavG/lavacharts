@@ -3,11 +3,8 @@
 namespace Khill\Lavacharts\DataTables\Cells;
 
 use Carbon\Carbon;
-use Khill\Lavacharts\Exceptions\CarbonParseError;
-use Khill\Lavacharts\Exceptions\InvalidDateTimeFormat;
-use Khill\Lavacharts\Exceptions\InvalidDateTimeString;
-use Khill\Lavacharts\Exceptions\InvalidStringValue;
-use Khill\Lavacharts\Values\StringValue;
+use Exception;
+use Khill\Lavacharts\Exceptions\UndefinedDateCellException;
 
 /**
  * DateCell Class
@@ -21,9 +18,30 @@ use Khill\Lavacharts\Values\StringValue;
  * @link      http://github.com/kevinkhill/lavacharts GitHub Repository Page
  * @link      http://lavacharts.com                   Official Docs Site
  * @license   http://opensource.org/licenses/MIT      MIT
+ * @property  Carbon $v
  */
 class DateCell extends Cell
 {
+    /**
+     * Parses a datetime string with or without a datetime format.
+     *
+     * Uses Carbon to create the values for the DateCell.
+     *
+     * @param  string $datetime
+     * @return Cell
+     * @throws \Khill\Lavacharts\Exceptions\UndefinedDateCellException
+     */
+    public static function create($datetime)
+    {
+        try {
+            $carbon = new Carbon($datetime);
+
+            return new self($carbon);
+        } catch (Exception $e) {
+            throw new UndefinedDateCellException($datetime);
+        }
+    }
+
     /**
      * Creates a new DateCell object from a Carbon object.
      *
@@ -31,48 +49,9 @@ class DateCell extends Cell
      * @param  string         $format
      * @param  array          $options
      */
-    public function __construct(Carbon $carbon = null, $format = '', array $options = [])
+    public function __construct(Carbon $carbon = null, $format = null, array $options = [])
     {
         parent::__construct($carbon, $format, $options);
-    }
-
-    /**
-     * Parses a datetime string with or without a datetime format.
-     *
-     * Uses Carbon to create the values for the DateCell.
-     *
-     *
-     * @param  string $dateTimeString
-     * @param  string $dateTimeFormat
-     * @return \Khill\Lavacharts\DataTables\Cells\Cell
-     * @throws \Khill\Lavacharts\Exceptions\InvalidDateTimeFormat
-     * @throws \Khill\Lavacharts\Exceptions\InvalidDateTimeString
-     */
-    public static function parseString($dateTimeString, $dateTimeFormat = '')
-    {
-        if ($dateTimeString === null) {
-            return new DateCell();
-        }
-
-        if (StringValue::isNonEmpty($dateTimeString) === false) {
-            throw new InvalidDateTimeString($dateTimeString);
-        }
-
-        if (StringValue::isNonEmpty($dateTimeFormat)) {
-            try {
-                return self::createFromFormat($dateTimeFormat, $dateTimeString);
-            } catch (\Exception $e) {
-                throw new InvalidDateTimeFormat($dateTimeFormat);
-            }
-        } else {
-            try {
-                $carbon = Carbon::parse($dateTimeString);
-
-                return new DateCell($carbon);
-            } catch (\Exception $e) {
-                throw new InvalidDateTimeString($dateTimeString);
-            }
-        }
     }
 
     /**
@@ -82,8 +61,8 @@ class DateCell extends Cell
      *
      * @param  string $format
      * @param  string $datetime
-     * @return \Khill\Lavacharts\DataTables\Cells\DateCell
-     * @throws \Khill\Lavacharts\Exceptions\InvalidDateTimeFormat
+     * @return DateCell
+     * @throws \Khill\Lavacharts\Exceptions\UndefinedDateCellException
      */
     public static function createFromFormat($format, $datetime)
     {
@@ -91,8 +70,8 @@ class DateCell extends Cell
             $carbon = Carbon::createFromFormat($format, $datetime);
 
             return new self($carbon);
-        } catch (\InvalidArgumentException $e) {
-            throw new InvalidDateTimeFormat($format);
+        } catch (Exception $e) {
+            throw new UndefinedDateCellException($datetime, $format);
         }
     }
 
@@ -119,12 +98,12 @@ class DateCell extends Cell
     }
 
     /**
-     * Custom serialization of the Carbon date.
+     * Return the DateCell as an array.
      *
-     * @return string
+     * @return array
      */
-    public function jsonSerialize()
+    public function toArray()
     {
-        return ['v' => (string) $this];
+        return ['v' => $this->__toString()];
     }
 }

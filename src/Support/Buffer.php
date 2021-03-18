@@ -2,7 +2,8 @@
 
 namespace Khill\Lavacharts\Support;
 
-use Khill\Lavacharts\Support\Contracts\JsonableInterface as Jsonable;
+use InvalidArgumentException;
+use Khill\Lavacharts\Support\Contracts\Jsonable as Jsonable;
 
 /**
  * Class Buffer
@@ -10,6 +11,7 @@ use Khill\Lavacharts\Support\Contracts\JsonableInterface as Jsonable;
  * Uses for building string outputs to send to the browser
  *
  * @package   Khill\Lavacharts\Support
+ * @since     3.1.0
  * @author    Kevin Hill <kevinkhill@gmail.com>
  * @copyright (c) 2015, KHill Designs
  * @link      http://github.com/kevinkhill/lavacharts GitHub Repository Page
@@ -28,7 +30,7 @@ class Buffer implements Jsonable
     /**
      * Buffer constructor.
      *
-     * @param string $str
+     * @param string|mixed $str
      */
     public function __construct($str = '')
     {
@@ -42,7 +44,7 @@ class Buffer implements Jsonable
      */
     public function __toString()
     {
-        return (string) $this->contents;
+        return $this->contents;
     }
 
     /**
@@ -52,7 +54,17 @@ class Buffer implements Jsonable
      */
     public function toJson()
     {
-        return (string) $this->contents;
+        return json_encode($this->__toString());
+    }
+
+    /**
+     * Custom serialization of the chart.
+     *
+     * @return string
+     */
+    public function jsonSerialize()
+    {
+        return $this->__toString();
     }
 
     /**
@@ -60,9 +72,15 @@ class Buffer implements Jsonable
      *
      * @param string $str
      */
-    public function setContents($str = '')
+    public function setContents($object)
     {
-        $this->contents = $str;
+        if ( ! is_string($object) && ! method_exists($object, '__toString')) {
+            throw new InvalidArgumentException(
+                'Buffers can only accept strings and objects implementing "__toString"'
+            );
+        }
+
+        $this->contents = (string) $object;
     }
 
     /**

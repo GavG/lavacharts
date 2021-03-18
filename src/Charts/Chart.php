@@ -2,10 +2,22 @@
 
 namespace Khill\Lavacharts\Charts;
 
-use Khill\Lavacharts\Support\Customizable;
-use Khill\Lavacharts\DataTables\DataTable;
+use Khill\Lavacharts\Exceptions\BadMethodCallException;
+use Khill\Lavacharts\Javascript\ChartJsFactory;
+use Khill\Lavacharts\Support\Buffer;
+use Khill\Lavacharts\Support\Contracts\Customizable;
+use Khill\Lavacharts\Support\Contracts\DataInterface;
+use Khill\Lavacharts\Support\Contracts\JavascriptSource;
+use Khill\Lavacharts\Support\Contracts\JsFactory;
+use Khill\Lavacharts\Support\Contracts\JsPackage;
+use Khill\Lavacharts\Support\Contracts\Wrappable;
+use Khill\Lavacharts\Support\Renderable;
+use Khill\Lavacharts\Support\Traits\HasDataTableTrait as HasDataTable;
+use Khill\Lavacharts\Support\Traits\HasOptionsTrait as HasOptions;
+use Khill\Lavacharts\Support\Traits\ToJavascriptTrait as ToJavascript;
 use Khill\Lavacharts\Values\ElementId;
 use Khill\Lavacharts\Values\Label;
+<<<<<<< HEAD
 use Khill\Lavacharts\Support\Traits\ElementIdTrait as HasElementId;
 use Khill\Lavacharts\Support\Traits\DataTableTrait as HasDataTable;
 use Khill\Lavacharts\Support\Traits\RenderableTrait as IsRenderable;
@@ -13,6 +25,8 @@ use Khill\Lavacharts\Support\Contracts\JsonableInterface as Jsonable;
 use Khill\Lavacharts\Support\Contracts\WrappableInterface as Wrappable;
 use Khill\Lavacharts\Support\Contracts\RenderableInterface as Renderable;
 use Khill\Lavacharts\Support\Contracts\VisualizationInterface as Visualization;
+=======
+>>>>>>> a4edf0a4d82aba848efa07ff10b537d640d4f91b
 
 /**
  * Class Chart
@@ -21,16 +35,25 @@ use Khill\Lavacharts\Support\Contracts\VisualizationInterface as Visualization;
  * used between all the different charts.
  *
  *
- * @package   Khill\Lavacharts\Charts
- * @author    Kevin Hill <kevinkhill@gmail.com>
+ * @package       Khill\Lavacharts\Charts
+ * @author        Kevin Hill <kevinkhill@gmail.com>
  * @copyright (c) 2017, KHill Designs
- * @link      http://github.com/kevinkhill/lavacharts GitHub Repository Page
- * @link      http://lavacharts.com                   Official Docs Site
- * @license   http://opensource.org/licenses/MIT      MIT
+ * @link          http://github.com/kevinkhill/lavacharts GitHub Repository Page
+ * @link          http://lavacharts.com                   Official Docs Site
+ * @license       http://opensource.org/licenses/MIT      MIT
  */
-class Chart extends Customizable implements Renderable, Wrappable, Jsonable, Visualization
+class Chart
+    extends Renderable
+    implements Customizable, /*JavascriptSource,*/ JsFactory, JsPackage, Wrappable
 {
-    use HasDataTable, IsRenderable;
+    use HasDataTable, HasOptions/*, ToJavascript*/;
+
+    /**
+     * Javascript type.
+     *
+     * @var string
+     */
+    const TYPE = 'Chart';
 
     /**
      * Type of wrappable class
@@ -40,17 +63,18 @@ class Chart extends Customizable implements Renderable, Wrappable, Jsonable, Vis
     /**
      * Builds a new chart with the given label.
      *
-     * @param \Khill\Lavacharts\Values\Label         $chartLabel Identifying label for the chart.
-     * @param \Khill\Lavacharts\DataTables\DataTable $datatable DataTable used for the chart.
-     * @param array                                  $options Options fot the chart.
+     * @param Label         $label   Identifying label for the chart.
+     * @param DataInterface $data    DataTable used for the chart.
+     * @param array         $options Options fot the chart.
      */
-    public function __construct(Label $chartLabel, DataTable $datatable = null, array $options = [])
+    public function __construct(Label $label, DataInterface $data = null, array $options = [])
     {
-        parent::__construct($options);
+        $this->setOptions($options);
 
-        $this->label = $chartLabel;
-        $this->datatable = $datatable;
+        $this->label     = $label;
+        $this->datatable = $data;
 
+<<<<<<< HEAD
         $this->setExtendedAttributes();
     }
 
@@ -65,6 +89,10 @@ class Chart extends Customizable implements Renderable, Wrappable, Jsonable, Vis
             $this->setElementId($this->options['elementId']);
 
             unset($this->options['elementId']);
+=======
+        if ($this->options->has('elementId')) {
+            $this->elementId = new ElementId($this->options->elementId);
+>>>>>>> a4edf0a4d82aba848efa07ff10b537d640d4f91b
         }
 
         if (method_exists($this, 'setPngOutput') &&
@@ -141,41 +169,111 @@ class Chart extends Customizable implements Renderable, Wrappable, Jsonable, Vis
     }
 
     /**
-     * Return a JSON representation of the chart, which would be the customizations.
+     * Get the JsFactory for the chart.
      *
-     * @return string
+     * @return ChartJsFactory
      */
-    public function toJson()
+    public function getJsFactory()
     {
-        return json_encode($this);
+        return new ChartJsFactory($this);
+    }
+
+    /**
+     * Array representation of the Chart.
+     *
+     * @return array
+     */
+    public function toArray()
+    {
+        if ( ! method_exists($this->datatable, 'getOptions')) {
+            throw new BadMethodCallException($this->datatable, 'getOptions');
+        }
+
+        $this->mergeOptions($this->datatable->getOptions());
+
+        return [
+            'pngOutput'    => false,
+            'chartType'    => $this->getType(),
+            'events'       => $this->getEvents(),
+            'formats'      => $this->getFormats(),
+            'chartVer'     => $this->getVersion(),
+            'chartClass'   => $this->getJsClass(),
+            'chartOptions' => $this->getOptions(),
+            'chartLabel'   => $this->getLabelStr(),
+            'chartPackage' => $this->getJsPackage(),
+            'elemId'       => $this->getElementId(),
+            'chartData'    => $this->datatable->toJsDataTable(),
+        ];
     }
 
     /**
      * Retrieves the events if any have been assigned to the chart.
      *
-     * @since  3.0.5
-     * @return array
+     *
+     * If no events are defined, then an empty buffer will be returned.
+     * Valid events will be converted to Javascriptable Event objects.
+     *
+     * @since  3.2.0
+     * @return Buffer The contents will be javascript source
      */
-    public function getEvents()
+    private function getEvents()
     {
-        return $this['events'];
+        $buffer = new Buffer();
+
+        if (!$this->options->has('events')) {
+            return $buffer;
+        }
+
+        foreach ($this->options->events as $event => $callback) {
+            $buffer->append(
+                new Event($event, $callback)
+            );
+        }
+
+        return $buffer;
     }
 
     /**
-     * Checks if any events have been assigned to the chart.
+     * Retrieves the formats from the datatable that is defined on the chart.
      *
-     * @return bool
+     *
+     * The formats will be serialized down to javascript source and added
+     * to a string buffer.
+     *
+     * If no formats are defined, then an empty buffer will be returned.
+     *
+     * @since  3.2.0
+     * @return Buffer The contents will be javascript source
      */
-    public function hasEvents()
+    private function getFormats()
     {
-        return isset($this['events']);
+        $buffer = new Buffer();
+
+        if (!method_exists([$this->datatable], 'hasFormattedColumns')) {
+//            throw new BadMethodCallException($this->datatable, 'hasFormattedColumns');
+//        }
+
+//        if (!$this->datatable->hasFormattedColumns()) {
+            return $buffer;
+        }
+
+        /**
+         * @var \Khill\Lavacharts\DataTables\Columns\Column $column
+         */
+        foreach ($this->datatable->getFormattedColumns() as $column) {
+            $buffer->append(
+                $column->getFormat()->toJavascript()
+            );
+        }
+
+        return $buffer;
     }
 
     /**
      * Sets any configuration option, with no checks for type / validity
      *
      *
-     * This is method was added in 2.5 as a bandaid to remove the handcuffs from
+     * This is method was added in 2.5 as a band-aid to remove the handcuffs from
      * users who want to add options that Google has added, that I have not.
      * I didn't intend to restrict the user to only select options, as the
      * goal was to type isNonEmpty and validate. This method can be used to set
@@ -184,7 +282,8 @@ class Chart extends Customizable implements Renderable, Wrappable, Jsonable, Vis
      * If the setting is an object, per the google docs, then use multi-dimensional
      * arrays and they will be converted upon rendering.
      *
-     * @since  3.0.0
+     * @deprecated 3.2.0
+     * @since      3.0.0
      * @param  array $options Array of customization options for the chart
      * @return \Khill\Lavacharts\Charts\Chart
      */
