@@ -108,7 +108,7 @@ class ScriptManager
 
         $this->lavaJsRendered = true;
 
-        return $this->scriptTagWrap($buffer);
+        return $buffer;
     }
 
     /**
