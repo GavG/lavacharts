@@ -30,13 +30,8 @@
         "khill/datatableplus": "Adds extra features to DataTables such as csv and laravel collection parsing."
     },
     "require": {
-<<<<<<< HEAD
         "php": "^7.2",
         "nesbot/carbon": "^2.31"
-=======
-        "php": ">=5.5.0",
-        "nesbot/carbon": "~1.14"
->>>>>>> a4edf0a4d82aba848efa07ff10b537d640d4f91b
     },
     "autoload": {
         "psr-4": {
